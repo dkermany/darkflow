@@ -25,6 +25,8 @@ class argHandler(dict):
         self.define('gpu', 0.0, 'how much gpu (from 0.0 to 1.0)')
         self.define('gpuName', '/gpu:0', 'GPU device name')
         self.define('lr', 1e-6, 'learning rate')
+        self.define('steps', '[-1]', 'Step number to scale learning rate')
+        self.define('scales', '[1]', 'Scales to change learning rate')
         self.define('keep',20,'Number of most recent training results to save')
         self.define('batch', 4, 'batch size')
         self.define('epoch', 1000, 'number of epoch')

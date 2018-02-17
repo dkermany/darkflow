@@ -46,7 +46,7 @@ def postprocess(self, net_out, im, save = True):
 		if boxResults is None:
 			continue
 		left, right, top, bot, mess, max_indx, confidence = boxResults
-		thick = int((h + w) // 300)
+		thick = int((h + w) // 1000)
 		if self.FLAGS.json:
 			resultsForJSON.append({"label": mess, "confidence": float('%.2f' % confidence), "topleft": {"x": left, "y": top}, "bottomright": {"x": right, "y": bot}})
 			continue
@@ -55,7 +55,7 @@ def postprocess(self, net_out, im, save = True):
 			(left, top), (right, bot),
 			colors[max_indx], thick)
 		cv2.putText(imgcv, mess, (left, top - 12),
-			0, 1e-3 * h, colors[max_indx],thick//3)
+			0, 1e-3 * h, colors[max_indx], thick)
 
 	if not save: return imgcv
 
