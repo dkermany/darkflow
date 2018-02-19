@@ -11,15 +11,28 @@ import glob
 def _pp(l): # pretty printing 
     for i in l: print('{}: {}'.format(i,l[i]))
 
-def pascal_voc_clean_xml(ANN, pick, exclusive = False):
-    print('Parsing for {} {}'.format(
-            pick, 'exclusively' * int(exclusive)))
+def pascal_voc_clean_xml(ANN, pick, specifics = None):
+		"""
+    ARGUMENTS:
+			ANN (str): /path/to/annotations
+			pick (set): chosen object labels from labels.txt
+ 			specifics (list): return info on only files in list
+
+		RETURNS:
+			list of image information
+			[...[filename, [h, w, [object, xmin, ymin, xmax, ymax]]]...]
+				
+		"""
+
+    print('Parsing for {}'.format(pick))
 
     dumps = list()
     cur_dir = os.getcwd()
     os.chdir(ANN)
     annotations = os.listdir('.')
     annotations = glob.glob(str(annotations)+'*.xml')
+    if specifics:
+        print(annotations)
     size = len(annotations)
 
     for i, file in enumerate(annotations):
@@ -45,6 +58,7 @@ def pascal_voc_clean_xml(ANN, pick, exclusive = False):
         for obj in root.iter('object'):
                 current = list()
                 name = obj.find('name').text
+                # Ignore objects not explicitly mentioned in labels.txt
                 if name not in pick:
                         continue
 
@@ -67,9 +81,9 @@ def pascal_voc_clean_xml(ANN, pick, exclusive = False):
         for current in all:
             if current[0] in pick:
                 if current[0] in stat:
-                    stat[current[0]]+=1
+                    stat[current[0]] += 1
                 else:
-                    stat[current[0]] =1
+                    stat[current[0]] = 1
 
     print('\nStatistics:')
     _pp(stat)

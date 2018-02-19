@@ -30,6 +30,7 @@ class YOLO(framework):
     resize_input = yolo.predict.resize_input
     findboxes = yolo.predict.findboxes
     process_box = yolo.predict.process_box
+    evaluate = yolov2.predict.evaluate
 
 class YOLOv2(framework):
     constructor = yolo.constructor
@@ -43,6 +44,7 @@ class YOLOv2(framework):
     resize_input = yolo.predict.resize_input
     findboxes = yolov2.predict.findboxes
     process_box = yolo.predict.process_box
+    evaluate = yolov2.predict.evaluate
 
 """
 framework factory

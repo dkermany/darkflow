@@ -121,6 +121,9 @@ def predict(self):
         exit('Error: {}'.format(msg.format(inp_path)))
 
     batch = min(self.FLAGS.batch, len(all_inps))
+    
+    # Load annotations
+    annotations = self.parse()
 
     # predict in batches
     n_batch = int(math.ceil(len(all_inps) / batch))
@@ -156,7 +159,21 @@ def predict(self):
                prediction, os.path.join(inp_path, this_batch[i])))(*p),
             enumerate(out))
         stop = time.time(); last = stop - start
+        self.say('Total time = {}s / {} inps = {} ips'.format(
+            last, len(inp_feed), len(inp_feed) / last))
 
+        # Evaluation
+        if self.FLAGS.evaluate:
+          self.say('Evaluating results'
+          start = time.time()
+          pool.map(lambda p: (lambda i, prediction:
+            self.framework.evaluate(
+              prediction, 
+              os.path.join(inp_path, this_batch[i]),
+              ))(*p),
+            enumerate(out))
+          stop = time.time(); last = stop - start
+          
         # Timing
         self.say('Total time = {}s / {} inps = {} ips'.format(
             last, len(inp_feed), len(inp_feed) / last))

@@ -21,8 +21,33 @@ def findboxes(self, net_out):
 	# meta
 	meta = self.meta
 	boxes = list()
-	boxes=box_constructor(meta,net_out)
+	boxes = box_constructor(meta,net_out)
 	return boxes
+
+# Calculate precision, recall, mAP
+def evaluate(self, net_out, im):
+  # Load images
+  imgdir = self.FLAGS.imgdir
+  filenames = os.listdir(imgdir)
+  filenames = [i for i in filenames if self.framework.is_inp(i)]
+  if not filenames:
+    msg = 'Failed to find any images in {} .'
+    exit('Error: {}'.format(msg.format(imgdir)))
+  
+  # Load annotations
+  data = self.parse()
+
+  predicted_boxes = self.findboxes(net_out)
+
+  if type(im) is not np.ndarray:
+    npimg = cv2.imread(im)
+  else: npimg = im
+  h, w, _ = npimg.shape
+
+  for threshold in np.arange(0.00, 1.00, 0.05):
+    for box in predicted_boxes:
+      boxResults = self.process_box(box, h, w, threshold)
+      left, right, top, bot, mess, max_indx, confidence = boxResults
 
 def postprocess(self, net_out, im, save = True):
 	"""
@@ -48,7 +73,11 @@ def postprocess(self, net_out, im, save = True):
 		left, right, top, bot, mess, max_indx, confidence = boxResults
 		thick = int((h + w) // 1000)
 		if self.FLAGS.json:
-			resultsForJSON.append({"label": mess, "confidence": float('%.2f' % confidence), "topleft": {"x": left, "y": top}, "bottomright": {"x": right, "y": bot}})
+			resultsForJSON.append({
+				"label": mess, 
+				"confidence": float('%.2f' % confidence), 
+				"topleft": {"x": left, "y": top}, 
+				"bottomright": {"x": right, "y": bot}})
 			continue
 
 		cv2.rectangle(imgcv,
