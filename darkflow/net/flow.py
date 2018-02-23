@@ -122,8 +122,8 @@ def predict(self):
 
     batch = min(self.FLAGS.batch, len(all_inps))
     
-    # Load annotations
-    annotations = self.parse()
+    # Load ground-truth bounding boxes
+    gt_boxes = self.framework.parse()
 
     # predict in batches
     n_batch = int(math.ceil(len(all_inps) / batch))
@@ -142,6 +142,8 @@ def predict(self):
             inp_feed.append(expanded)
         this_batch = new_all
 
+        #print(this_batch)
+
         # Feed to the net
         feed_dict = {self.inp : np.concatenate(inp_feed, 0)}    
         self.say('Forwarding {} inputs ...'.format(len(inp_feed)))
@@ -152,28 +154,26 @@ def predict(self):
             last, len(inp_feed), len(inp_feed) / last))
 
         # Post processing
-        self.say('Post processing {} inputs ...'.format(len(inp_feed)))
-        start = time.time()
-        pool.map(lambda p: (lambda i, prediction:
-            self.framework.postprocess(
-               prediction, os.path.join(inp_path, this_batch[i])))(*p),
-            enumerate(out))
-        stop = time.time(); last = stop - start
-        self.say('Total time = {}s / {} inps = {} ips'.format(
-            last, len(inp_feed), len(inp_feed) / last))
+        #self.say('Post processing {} inputs ...'.format(len(inp_feed)))
+        #start = time.time()
+        #pool.map(lambda p: (lambda i, prediction:
+        #    self.framework.postprocess(
+        #       prediction, os.path.join(inp_path, this_batch[i])))(*p),
+        #    enumerate(out))
+        #stop = time.time(); last = stop - start
+        #self.say('Total time = {}s / {} inps = {} ips'.format(
+        #    last, len(inp_feed), len(inp_feed) / last))
 
         # Evaluation
         if self.FLAGS.evaluate:
-          self.say('Evaluating results'
+          self.say('Evaluating results')
           start = time.time()
-          pool.map(lambda p: (lambda i, prediction:
-            self.framework.evaluate(
-              prediction, 
-              os.path.join(inp_path, this_batch[i]),
-              ))(*p),
-            enumerate(out))
+          self.framework.evaluate(
+            out, this_batch, gt_boxes, 
+            self.FLAGS.detection, self.FLAGS.redundant
+          )
           stop = time.time(); last = stop - start
           
-        # Timing
-        self.say('Total time = {}s / {} inps = {} ips'.format(
-            last, len(inp_feed), len(inp_feed) / last))
+          # Timing
+          self.say('Total time = {}s / {} inps = {} ips'.format(
+              last, len(inp_feed), len(inp_feed) / last))

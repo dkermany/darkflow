@@ -11,18 +11,18 @@ import glob
 def _pp(l): # pretty printing 
     for i in l: print('{}: {}'.format(i,l[i]))
 
-def pascal_voc_clean_xml(ANN, pick, specifics = None):
-		"""
+def pascal_voc_clean_xml(ANN, pick):
+    """
     ARGUMENTS:
-			ANN (str): /path/to/annotations
-			pick (set): chosen object labels from labels.txt
- 			specifics (list): return info on only files in list
+        ANN (str): /path/to/annotations
+        pick (set): chosen object labels from labels.txt
+        specifics (list): return info on only files in list
 
-		RETURNS:
-			list of image information
-			[...[filename, [h, w, [object, xmin, ymin, xmax, ymax]]]...]
+    RETURNS:
+        list of image information
+        [...[filename, [h, w, [object, xmin, ymin, xmax, ymax]]]...]
 				
-		"""
+    """
 
     print('Parsing for {}'.format(pick))
 
@@ -31,8 +31,6 @@ def pascal_voc_clean_xml(ANN, pick, specifics = None):
     os.chdir(ANN)
     annotations = os.listdir('.')
     annotations = glob.glob(str(annotations)+'*.xml')
-    if specifics:
-        print(annotations)
     size = len(annotations)
 
     for i, file in enumerate(annotations):
