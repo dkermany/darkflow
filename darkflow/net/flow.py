@@ -316,10 +316,12 @@ def evaluate(self, binary=False):
   print("mAP: {}".format(mAP))
 
 def OCTpredict(self):
-  outfolder = os.path.join(self.FLAGS.imgdir, "out", "best")
+  outfolder = os.path.join(self.FLAGS.imgdir, "out")
   assert os.path.exists(outfolder)
 
   json_paths = glob("{}/*.json".format(outfolder))
+  outfolder = os.path.join(outfolder, "best")
+  
   for jsfilename in tqdm(json_paths):
     basename = os.path.basename(os.path.normpath(jsfilename)).split(".")[0]
     image_filename = "{}/{}.jpeg".format(self.FLAGS.imgdir, basename)
