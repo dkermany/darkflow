@@ -52,26 +52,39 @@ def postprocess_OCT(self, json, imgpath):
     "ERM": 0.25
   }
 
+  customcolors = {
+  	"CNV": (220,20,60),  #crimson
+    "RF" : (50,205,50),  #limegreen
+    "GA" : (255,165,0),  #orange
+    "DRU": (255,215,0),  #gold
+    "EX" : (148,0,211),  #darkviolet
+    "ERM": (112,128,144) #slategray
+  }
+
   relevant_boxes = [ bb for bb in json if bb["confidence"] > thresholds[bb["label"]]]
   current_img = np.copy(img)
 
+  predictions = []
+
   for bb in relevant_boxes:
     label = bb["label"]
+    if label not in predictions: predictions.append(label)
+
     xmin, ymin = bb["topleft"]["x"], bb["topleft"]["y"]  
     xmax, ymax = bb["bottomright"]["x"], bb["bottomright"]["y"]
 
     # Draw bounding box and label
     cv2.rectangle(current_img, (xmin, ymin),(xmax, ymax),
-      colors[labels.index(label)], int(thickness*1.2))
+      customcolors[label], int(thickness*1.2))
     # cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
     #   colors[labels.index(label)], thickness)
 
   # Threshold Label
   # cv2.putText(current_img, "threshold: {0:.1f}%".format(threshold * 100), (40, 100), 0, 3e-03 * h, 
     # (255,255,255), thickness*2)
-  for j, label in enumerate(labels):
-    cv2.putText(current_img, label, (100 + (200 * j), h - 40), 0, 1e-03 * h,
-      colors[labels.index(label)], int(thickness*1.5))
+  for j, label in enumerate(sorted(predictions)):
+    cv2.putText(current_img, label, (80 + (150 * j), h - 40), 0, 1e-03 * h,
+      customcolors[label], int(thickness*1.7))
 
   return current_img
 
