@@ -15,6 +15,7 @@ from glob import glob
 from ..utils.box2 import IOU
 import line_profiler
 import tifffile
+import cv2
 
 train_stats = (
     'Training statistics: \n'
