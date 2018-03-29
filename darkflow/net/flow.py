@@ -316,7 +316,7 @@ def evaluate(self, binary=False):
   print("mAP: {}".format(mAP))
 
 def OCTpredict(self):
-  outfolder = os.path.join(self.FLAGS.imgdir, "out")
+  outfolder = os.path.join(self.FLAGS.imgdir, "out", "best")
   assert os.path.exists(outfolder)
 
   json_paths = glob("{}/*.json".format(outfolder))
