@@ -62,7 +62,7 @@ def postprocess_OCT(self, json, imgpath):
 
     # Draw bounding box and label
     cv2.rectangle(current_img, (xmin, ymin),(xmax, ymax),
-      colors[labels.index(label)], thickness)
+      colors[labels.index(label)], int(thickness*1.2))
     # cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
     #   colors[labels.index(label)], thickness)
 
@@ -71,7 +71,7 @@ def postprocess_OCT(self, json, imgpath):
     # (255,255,255), thickness*2)
   for j, label in enumerate(labels):
     cv2.putText(current_img, label, (100 + (200 * j), h - 40), 0, 1e-03 * h,
-      colors[labels.index(label)], int(thickness*1.2))
+      colors[labels.index(label)], int(thickness*1.5))
 
   return current_img
 
