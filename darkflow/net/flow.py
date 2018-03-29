@@ -321,7 +321,8 @@ def OCTpredict(self):
 
   json_paths = glob("{}/*.json".format(outfolder))
   outfolder = os.path.join(outfolder, "best")
-  
+  if not os.path.exists(outfolder): os.makedirs(outfolder)
+
   for jsfilename in tqdm(json_paths):
     basename = os.path.basename(os.path.normpath(jsfilename)).split(".")[0]
     image_filename = "{}/{}.jpeg".format(self.FLAGS.imgdir, basename)
