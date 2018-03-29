@@ -75,16 +75,16 @@ def postprocess_OCT(self, json, imgpath):
 
     # Draw bounding box and label
     cv2.rectangle(current_img, (xmin, ymin),(xmax, ymax),
-      customcolors[label], int(thickness*1.2))
-    # cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
-    #   colors[labels.index(label)], thickness)
+      colors[labels.index(label)], int(thickness*1.2))
+    cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
+      colors[labels.index(label)], thickness)
 
   # Threshold Label
   # cv2.putText(current_img, "threshold: {0:.1f}%".format(threshold * 100), (40, 100), 0, 3e-03 * h, 
     # (255,255,255), thickness*2)
-  for j, label in enumerate(sorted(predictions)):
-    cv2.putText(current_img, label, (80 + (150 * j), h - 40), 0, 1e-03 * h,
-      customcolors[label], int(thickness*1.7))
+  # for j, label in enumerate(sorted(predictions)):
+  #   cv2.putText(current_img, label, (80 + (150 * j), h - 40), 0, 1e-03 * h,
+  #     customcolors[label], int(thickness*1.7))
 
   return current_img
 
