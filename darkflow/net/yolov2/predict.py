@@ -133,7 +133,7 @@ def postprocess(self, net_out, im, threshold, save = True):
   """
   inp_path = os.path.dirname(im)
 
-  if self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+  if self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif or self.FLAGS.clinic:
     threshold = 0.0
 
   boxes = self.findboxes(net_out, threshold)
@@ -154,7 +154,7 @@ def postprocess(self, net_out, im, threshold, save = True):
       continue
     left, right, top, bot, mess, max_indx, confidence = boxResults
     thick = int((h + w) // 2000)
-    if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+    if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif or self.FLAGS.clinic:
       resultsForJSON.append({
         "label": mess, 
         "confidence": float('%.2f' % confidence), 
@@ -174,7 +174,7 @@ def postprocess(self, net_out, im, threshold, save = True):
   outfolder = os.path.join(inp_path, 'out')
   if not os.path.exists(outfolder): os.makedirs(outfolder)
   img_name = os.path.join(outfolder, os.path.basename(im))
-  if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+  if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif or self.FLAGS.clinic:
     textJSON = json.dumps(resultsForJSON)
     textFile = os.path.splitext(img_name)[0] + ".json"
     with open(textFile, 'w') as f:
