@@ -332,7 +332,10 @@ def OCTpredict(self):
       js = json.load(f)
  
     output = self.framework.postprocess_OCT(js, image_filename)
-    cv2.imwrite("{}/{}-{}{}".format(outfolder, basename, "prediction", ".jpeg"), output)
+    savefile = "{}/{}-{}{}".format(outfolder, basename, "prediction", ".jpeg")
+    cv2.imwrite(savefile, output)
+  print(savefile)
+  print(output.shape)
 
 #@profile
 def save_prediction_stacks(self):
