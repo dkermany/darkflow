@@ -71,7 +71,7 @@ def postprocess_OCT(self, json, imgpath):
     # (255,255,255), thickness*2)
   for j, label in enumerate(labels):
     cv2.putText(current_img, label, (100 + (200 * j), h - 40), 0, 1e-03 * h,
-      colors[labels.index(label)], thickness*1.2)
+      colors[labels.index(label)], int(thickness*1.2))
 
   return current_img
 
