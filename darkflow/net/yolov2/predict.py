@@ -43,7 +43,8 @@ def postprocess_OCT(self, json, imgpath):
   thickness = int((h + w) // 2000)
   img_name = os.path.basename(imgpath).split(".")[0]
 
-  outfolder = os.path.join(self.FLAGS.imgdir, "out")
+  outfolder = os.path.join(self.FLAGS.imgdir, "out", "best")
+
   if not os.path.exists(outfolder): os.makedirs(outfolder)
   
   thresholds = {
