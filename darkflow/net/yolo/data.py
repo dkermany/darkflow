@@ -15,7 +15,7 @@ def parse(self, exclusive = False):
         msg = 'Annotation directory not found {} .'
         exit('Error: {}'.format(msg.format(ann)))
     print('\n{} parsing {}'.format(meta['model'], ann))
-    dumps = pascal_voc_clean_xml(ann, meta['labels'])
+    dumps = pascal_voc_clean_xml(ann, meta['labels'], exclusive)
     return dumps
 
 
@@ -112,7 +112,8 @@ def shuffle(self):
 
             for j in range(b*batch, b*batch+batch):
                 train_instance = data[shuffle_idx[j]]
-                inp, new_feed = self._batch(train_instance)
+                try: inp, new_feed = self._batch(train_instance)
+                except AttributeError: print("Image not found"); continue
 
                 if inp is None: continue
                 x_batch += [np.expand_dims(inp, 0)]

@@ -2,6 +2,8 @@ from .defaults import argHandler #Import the default arguments
 import os
 from .net.build import TFNet
 
+import time
+
 def cliHandler(args):
     FLAGS = argHandler()
     FLAGS.setDefaults()
@@ -34,4 +36,25 @@ def cliHandler(args):
         print('Rebuild a constant version ...')
         tfnet.savepb(); exit('Done')
 
-    tfnet.predict()
+
+    if FLAGS.classify:
+        start = time.time()
+        tfnet.classify(FLAGS.classify)
+        end = time.time() - start
+        print("Classification time: {0:.2f}s".format(end))
+        exit('Classification finished, exit.')
+
+    tfnet.predict(FLAGS.imgdir)
+
+    if FLAGS.json2tif:
+        tfnet.save_prediction_stacks()
+
+    if FLAGS.evaluate:
+        start = time.time()
+        tfnet.evaluate()
+        end = time.time() - start
+        print("Evaluation time: {0:.2f}s".format(end))
+
+
+
+

@@ -55,9 +55,10 @@ def preprocess(self, im, allobj = None):
 	using scale, translation, flipping and recolor. The accompanied
 	parsed annotation (allobj) will also be modified accordingly.
 	"""
+     
 	if type(im) is not np.ndarray:
 		im = cv2.imread(im)
-
+        
 	if allobj is not None: # in training mode
 		result = imcv2_affine_trans(im)
 		im, dims, trans_param = result

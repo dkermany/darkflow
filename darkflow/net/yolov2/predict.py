@@ -3,185 +3,172 @@ import math
 import cv2
 import os
 import json
+import matplotlib.pyplot as plt
 #from scipy.special import expit
 #from utils.box import BoundBox, box_iou, prob_compare
 #from utils.box import prob_compare2, box_intersection
+from collections import Counter
 from ...utils.box2 import IOU
 from ...cython_utils.cy_yolo2_findboxes import box_constructor
+from copy import deepcopy
+import line_profiler
+from pprint import pprint
 
 def expit(x):
-	return 1. / (1. + np.exp(-x))
+  return 1. / (1. + np.exp(-x))
 
 def _softmax(x):
     e_x = np.exp(x - np.max(x))
     out = e_x / e_x.sum()
     return out
 
-def findboxes(self, output_image):
-	# meta
-	meta = self.meta
-	boxes = list()
-	boxes = box_constructor(meta,output_image)
-	return boxes
+def findboxes(self, net_out, threshold):
+  # meta
+  meta = self.meta
+  boxes = list()
+  boxes = box_constructor(meta, threshold, net_out)
+  return boxes
 
-# Calculate precision, recall, mAP
-def evaluate(self, output_batch, filenames, box_info, detection=False, redundant=False):
-  # Meta
-  _labels = self.meta["labels"]
+def best_threshold(self, json, imgpath):
+  """
+  Takes json input and im path and saves jpeg with best selected thresholds
+  """
 
-  # Create dict to store precision/recall points
-  PR = { _class: { "precision": [], "recall": [] } for _class in _labels }
+  meta = self.meta
+  colors = meta["colors"]
+  labels = meta["labels"]
+  assert type(imgpath) is str
+  img = cv2.imread(imgpath)
+  h, w, _ = img.shape
+  thickness = int((h + w) // 2000)
 
-  # Load ground-truth boxes into dict
-  gt_boxes = { image[0]: image[1] for image in box_info }
+  outfolder = os.path.join(self.FLAGS.imgdir, "out")
+  if not os.path.exists(outfolder): os.makedirs(outfolder)
+  
+  thresholds = {
+    "CNV": 0.2,
+    "RF" : 0.2,
+    "GA" : 0.15,
+    "DRU": 0.20,
+    "EX" : 0.15,
+    "ERM": 0.25
+  }
 
-  # Loops over thresholds
-  for threshold in np.arange(1.00, 0.00, -0.05): 
+  relevant_boxes = [ bb for bb in json if bb["confidence"] > thresholds[bb["label"]]]
+  current_img = np.copy(img)
+
+  for bb in relevant_boxes:
+    label = bb["label"]
+    xmin, ymin = bb["topleft"]["x"], bb["topleft"]["y"]  
+    xmax, ymax = bb["bottomright"]["x"], bb["bottomright"]["y"]
+
     
-    # Initialize logging dictionary
-    if detection: oneclass_eval = { "TP": 0, "FP": 0, "FN": 0 }
-    else: class_eval = { _class: { "TP": 0, "FP": 0, "FN": 0 } for _class in _labels } 
 
-    # Loops over each image in output batch
-    for i, output_image in enumerate(output_batch):
-      current_filename = filenames[i]
-      assert current_filename in gt_boxes.keys()
+#@profile
+def postprocess_tif(self, json, imgpath):
+  """
+  Takes json input and im path and saves thresholded predictions
+  to a tif stack for manual grading
+  """
+  # meta
+  meta = self.meta
+  colors = meta["colors"]
+  labels = meta["labels"]
+  assert type(imgpath) is str
+  img = cv2.imread(imgpath)
+  h, w, _ = img.shape
+  thickness = int((h + w) // 2000)
 
-      npimg = cv2.imread(os.path.join(self.FLAGS.imgdir, current_filename))
-      w, h, _ = npimg.shape
-      #h, w, _ = npimg.shape
+  outfolder = os.path.join(self.FLAGS.imgdir, "out")
+  if not os.path.exists(outfolder): os.makedirs(outfolder)
+  tif_stack = np.zeros((20, h, w, 3), "uint8")
 
-      # Extract gt_info
-      gt_h, gt_w, current_gt = gt_boxes[current_filename]
-      assert h == gt_h and w == gt_w   
+  for i, threshold in enumerate(np.arange(0.05, 1.05, 0.05)):
+    relevant_boxes = [ bb for bb in json if bb["confidence"] > threshold ]
+    current_img = np.copy(img)
+    
+    for bb in relevant_boxes:
+      #if threshold > bb["confidence"]:
+      #  continue
 
-      current_predicted = self.findboxes(output_image)
-
-      # Loop over each class
-      for current_class in _labels:
-
-        # Create GT variables for evaluation
-        gt_check = [ False for m in current_gt if m[0] == current_class ]
-        current_gt_class = [ m for m in current_gt if m[0] == current_class ]
-
-        # Loop over each predicted box
-        for j, box_predicted in enumerate(current_predicted):
-          print("{}    {curre}".format(current_class, j))
-          # Variable to track prediction
-          correct_prediction = False
-
-          # Get predicted coordinates
-          predicted_results = self.process_box(box_predicted, h, w, threshold)
-          if predicted_results is None: continue
-          left, right, bot, top, label, max_indx, confidence = predicted_results
-          if label != current_class and not detection: continue
-
-          # Reorganize into dict
-          pred_dict = { "xn": left, "xx": right, "yn": bot, "yx": top }
-
-          # Loop over each ground-truth box
-          for k, box_gt in enumerate(current_gt_class):
-   
-            # if evaluation is not redundant and this box has been found
-            if gt_check[k] and not redundant: continue
-
-            # Get ground-truth coordinates and reorganize into dict
-            _label, _left, _bot, _right, _top = box_gt
-            gt_dict = { "xn": _left, "xx": _right, "yn": _bot, "yx": _top }
-            assert _label == label
-
-            # Calculate Intersection-Over-Union of current boxes
-            iou = IOU(pred_dict, gt_dict)
-            print("IOU: {}".format(iou))
-            # Boxes overlap sufficiently (True Positives)
-            if iou >= 0.4:
-              correct_prediction = True
-              gt_check[k] = True
-              if detection: oneclass_eval["TP"] += 1
-              else: class_eval[current_class]["TP"] += 1
-              break
-
-          # Prediction did not match any of the ground-truth boxes of this class
-          if not correct_prediction: 
-            class_eval[current_class]["FP"] += 1
-            print("FALSE POSITIVE")
-          
-        # Ground-truth boxes NOT detected (False Negatives)
-        if detection: oneclass_eval["FN"] += gt_check.count(False)
-        else: class_eval[current_class]["FN"] += gt_check.count(False)
-      
-      # Summary for classes
-      #for class_ in class_eval:
-       # print("{}:    {} TP  {} FP  {} FN".format(
-        #    class_, class_eval[class_]["TP"], class_eval[class_]["FP"],
-         #   class_eval[class_]["FN"]))
+      label = bb["label"]
+      xmin, ymin = bb["topleft"]["x"], bb["topleft"]["y"]
+      xmax, ymax = bb["bottomright"]["x"], bb["bottomright"]["y"]
  
-    # Calculate precision and recall for each class at current threshold              
-    for class_ in class_eval:
-      tp = class_eval[class_]["TP"]
-      fp = class_eval[class_]["FP"]
-      fn = class_eval[class_]["FN"]
-      if tp == fp == fn == 0:
+      # Draw bounding box and label
+      cv2.rectangle(current_img, (xmin, ymin),(xmax, ymax),
+        colors[labels.index(label)], thickness)
+      cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
+        colors[labels.index(label)], thickness)
+
+    # Threshold Label
+    cv2.putText(current_img, "threshold: {0:.1f}%".format(threshold * 100), (40, 100), 0, 3e-03 * h, 
+      (255,255,255), thickness*2)
+    # for j, label in enumerate(labels):
+    #   cv2.putText(current_img, label, (100 + (200 * j), h - 40), 0, 1e-03 * h,
+    #     colors[labels.index(label)], thickness*1.5)
+
+
+    tif_stack[i] = current_img
+
+  # assert tif_stack is not all zeros
+  assert np.any(tif_stack)
+  return tif_stack
+
+   
+def postprocess(self, net_out, im, threshold, save = True):
+  """
+  Takes net output, draw net_out, save to disk
+  """
+  inp_path = os.path.dirname(im)
+
+  if self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+    threshold = 0.0
+
+  boxes = self.findboxes(net_out, threshold)
+
+  # meta
+  meta = self.meta
+  colors = meta['colors']
+  labels = meta['labels']
+  if type(im) is not np.ndarray:
+    imgcv = cv2.imread(im)
+  else: imgcv = im
+  h, w, _ = imgcv.shape
+  
+  resultsForJSON = []
+  for b in boxes:
+    boxResults = self.process_box(b, h, w, threshold)
+    if boxResults is None:
+      continue
+    left, right, top, bot, mess, max_indx, confidence = boxResults
+    thick = int((h + w) // 2000)
+    if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+      resultsForJSON.append({
+        "label": mess, 
+        "confidence": float('%.2f' % confidence), 
+        "topleft": {"x": left, "y": top}, 
+        "bottomright": {"x": right, "y": bot}})
+      if self.FLAGS.json:
         continue
-      elif tp == fp == 0:
-        precision = 1.0
-        recall = 0.0
-      elif tp == fn == 0:
-        precision = 0.0
-        recall = 1.0
-      else:
-        precision = float(tp) / float(tp + fp)
-        recall = float(tp) / float(tp + fn)
 
-      PR[class_]["precision"].append(precision)   
-      PR[class_]["recall"].append(recall)
+    cv2.rectangle(imgcv,
+      (left, top), (right, bot),
+      colors[max_indx], thick)
+    cv2.putText(imgcv, mess, (left, top - 12),
+     0, 1e-3 * h, colors[max_indx], thick)
 
-  #print(PR)
+  if not save: return imgcv
 
-def postprocess(self, net_out, im, save = True):
-	"""
-	Takes net output, draw net_out, save to disk
-	"""
-	boxes = self.findboxes(net_out)
+  outfolder = os.path.join(inp_path, 'out')
+  if not os.path.exists(outfolder): os.makedirs(outfolder)
+  img_name = os.path.join(outfolder, os.path.basename(im))
+  if self.FLAGS.json or self.FLAGS.evaluate or self.FLAGS.classify or self.FLAGS.json2tif:
+    textJSON = json.dumps(resultsForJSON)
+    textFile = os.path.splitext(img_name)[0] + ".json"
+    with open(textFile, 'w') as f:
+      f.write(textJSON)
+    if self.FLAGS.json:
+      return
 
-	# meta
-	meta = self.meta
-	threshold = meta['thresh']
-	colors = meta['colors']
-	if type(im) is not np.ndarray:
-		imgcv = cv2.imread(im)
-	else: imgcv = im
-	h, w, _ = imgcv.shape
-	
-	resultsForJSON = []
-	for b in boxes:
-		boxResults = self.process_box(b, h, w, threshold)
-		if boxResults is None:
-			continue
-		left, right, top, bot, mess, max_indx, confidence = boxResults
-		thick = int((h + w) // 1000)
-		if self.FLAGS.json:
-			resultsForJSON.append({
-				"label": mess, 
-				"confidence": float('%.2f' % confidence), 
-				"topleft": {"x": left, "y": top}, 
-				"bottomright": {"x": right, "y": bot}})
-			continue
-
-		cv2.rectangle(imgcv,
-			(left, top), (right, bot),
-			colors[max_indx], thick)
-		cv2.putText(imgcv, mess, (left, top - 12),
-			0, 1e-3 * h, colors[max_indx], thick)
-	if not save: return imgcv
-
-	outfolder = os.path.join(self.FLAGS.imgdir, 'out')
-	img_name = os.path.join(outfolder, os.path.basename(im))
-	if self.FLAGS.json:
-		textJSON = json.dumps(resultsForJSON)
-		textFile = os.path.splitext(img_name)[0] + ".json"
-		with open(textFile, 'w') as f:
-			f.write(textJSON)
-		return
-
-	cv2.imwrite(img_name, imgcv)
+  cv2.imwrite(img_name, imgcv)

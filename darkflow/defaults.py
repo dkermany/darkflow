@@ -37,12 +37,11 @@ class argHandler(dict):
         self.define('saveVideo', False, 'Records video from input video or camera')
         self.define('pbLoad', '', 'path to .pb protobuf file (metaLoad must also be specified)')
         self.define('metaLoad', '', 'path to .meta file generated during --savepb that corresponds to .pb file')
+        self.define('classify', None, 'path to classified test subdirectories (/DME, /CNV, /DRUSEN, /NORMAL)')
         self.define('evaluate', False, 'Evaluates model on test set. Requires imgdir and annotations.')
-        self.define('detection', False, 'Evaluates model as object detection. Removes classification by merging classes.')
-        self.define('redundance', False, 'Removes error for multiple correct predictions on the same ground-truth box')
+        self.define('json2tif', False, 'Output 3D stack of different threshold predictions')
 
 
-        
     def define(self, argName, default, description):
         self[argName] = default
         self._descriptions[argName] = description

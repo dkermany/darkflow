@@ -6,6 +6,7 @@ from .ops import op_create, identity
 from .ops import HEADER, LINE
 from .framework import create_framework
 from ..dark.darknet import Darknet
+from ..cython_utils.evaluate import cy_evaluate
 import json
 import os
 
@@ -28,10 +29,13 @@ class TFNet(object):
 	train = flow.train
 	camera = help.camera
 	predict = flow.predict
+	evaluate = flow.evaluate
+	classify = flow.classify
 	return_predict = flow.return_predict
 	to_darknet = help.to_darknet
 	build_train_op = help.build_train_op
 	load_from_ckpt = help.load_from_ckpt
+        save_prediction_stacks = flow.save_prediction_stacks        
 
 	def __init__(self, FLAGS, darknet = None):
 		self.ntrain = 0
@@ -175,3 +179,9 @@ class TFNet(object):
 		self.say('Saving const graph def to {}'.format(name))
 		graph_def = tfnet_pb.sess.graph_def
 		tf.train.write_graph(graph_def,'./', name, False)
+
+	# def evaluate(self):
+	# 	meta = self.meta
+	# 	framework = self.framework
+	# 	FLAGS = self.FLAGS
+	# 	cy_evaluate(meta, framework, FLAGS)

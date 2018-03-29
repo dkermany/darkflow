@@ -11,7 +11,7 @@ import glob
 def _pp(l): # pretty printing 
     for i in l: print('{}: {}'.format(i,l[i]))
 
-def pascal_voc_clean_xml(ANN, pick):
+def pascal_voc_clean_xml(ANN, pick, specifics = None):
     """
     ARGUMENTS:
         ANN (str): /path/to/annotations
@@ -21,16 +21,15 @@ def pascal_voc_clean_xml(ANN, pick):
     RETURNS:
         list of image information
         [...[filename, [h, w, [object, xmin, ymin, xmax, ymax]]]...]
-				
+
     """
-
-    print('Parsing for {}'.format(pick))
-
+    
     dumps = list()
     cur_dir = os.getcwd()
     os.chdir(ANN)
     annotations = os.listdir('.')
     annotations = glob.glob(str(annotations)+'*.xml')
+    #if specifics:
     size = len(annotations)
 
     for i, file in enumerate(annotations):
@@ -85,7 +84,7 @@ def pascal_voc_clean_xml(ANN, pick):
 
     print('\nStatistics:')
     _pp(stat)
-    print('Dataset size: {}'.format(len(dumps)))
+    print('Dataset size: {}\n'.format(len(dumps)))
 
     os.chdir(cur_dir)
     return dumps
