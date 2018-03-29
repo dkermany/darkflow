@@ -48,6 +48,11 @@ def cliHandler(args):
 
     if FLAGS.json2tif:
         tfnet.save_prediction_stacks()
+        exit("TIF stacks saved")
+
+    if FLAGS.clinic:
+        tfnet.OCTpredict()
+        exit("Predictions saved")
 
     if FLAGS.evaluate:
         start = time.time()

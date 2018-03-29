@@ -35,7 +35,8 @@ class TFNet(object):
 	to_darknet = help.to_darknet
 	build_train_op = help.build_train_op
 	load_from_ckpt = help.load_from_ckpt
-        save_prediction_stacks = flow.save_prediction_stacks        
+  save_prediction_stacks = flow.save_prediction_stacks 
+  OCTpredict = flow.OCTpredict       
 
 	def __init__(self, FLAGS, darknet = None):
 		self.ntrain = 0

@@ -29,7 +29,7 @@ def findboxes(self, net_out, threshold):
   boxes = box_constructor(meta, threshold, net_out)
   return boxes
 
-def best_threshold(self, json, imgpath):
+def postprocess_OCT(self, json, imgpath):
   """
   Takes json input and im path and saves jpeg with best selected thresholds
   """
@@ -41,6 +41,7 @@ def best_threshold(self, json, imgpath):
   img = cv2.imread(imgpath)
   h, w, _ = img.shape
   thickness = int((h + w) // 2000)
+  img_name = os.path.basename(imgpath).split(".")[0]
 
   outfolder = os.path.join(self.FLAGS.imgdir, "out")
   if not os.path.exists(outfolder): os.makedirs(outfolder)
@@ -62,7 +63,20 @@ def best_threshold(self, json, imgpath):
     xmin, ymin = bb["topleft"]["x"], bb["topleft"]["y"]  
     xmax, ymax = bb["bottomright"]["x"], bb["bottomright"]["y"]
 
-    
+    # Draw bounding box and label
+    cv2.rectangle(current_img, (xmin, ymin),(xmax, ymax),
+      colors[labels.index(label)], thickness)
+    # cv2.putText(current_img, label, (xmin, ymin - 12), 0, 1e-03 * h, 
+    #   colors[labels.index(label)], thickness)
+
+  # Threshold Label
+  # cv2.putText(current_img, "threshold: {0:.1f}%".format(threshold * 100), (40, 100), 0, 3e-03 * h, 
+    # (255,255,255), thickness*2)
+  for j, label in enumerate(labels):
+    cv2.putText(current_img, label, (100 + (200 * j), h - 40), 0, 1e-03 * h,
+      colors[labels.index(label)], thickness*1.2)
+
+  return current_img
 
 #@profile
 def postprocess_tif(self, json, imgpath):
@@ -168,7 +182,7 @@ def postprocess(self, net_out, im, threshold, save = True):
     textFile = os.path.splitext(img_name)[0] + ".json"
     with open(textFile, 'w') as f:
       f.write(textJSON)
-    if self.FLAGS.json:
+    if self.FLAGS.json or self.FLAGS.clinic:
       return
 
   cv2.imwrite(img_name, imgcv)

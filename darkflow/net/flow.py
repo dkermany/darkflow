@@ -315,6 +315,22 @@ def evaluate(self, binary=False):
   mAP = sum(list(AP.values())) / float(len(list(AP.values())))
   print("mAP: {}".format(mAP))
 
+def OCTpredict(self):
+  outfolder = os.path.join(self.FLAGS.imgdir, "out")
+  assert os.path.exists(outfolder)
+
+  json_paths = glob("{}/*.json".format(outfolder))
+  for jsfilename in tqdm(json_paths):
+    basename = os.path.basename(os.path.normpath(jsfilename)).split(".")[0]
+    image_filename = "{}/{}.jpeg".format(self.FLAGS.imgdir, basename)
+    assert os.path.isfile(image_filename)
+    
+    with open(jsfilename) as f:
+      js = json.load(f)
+ 
+    output = self.framework.postprocess_OCT(js, image_filename)
+    cv2.imwrite("{}/{}-{}{}".format(outfolder, basename, "prediction", ".jpeg"), output)
+
 #@profile
 def save_prediction_stacks(self):
   outfolder = os.path.join(self.FLAGS.imgdir, "out")
@@ -331,8 +347,8 @@ def save_prediction_stacks(self):
       js = json.load(f)
  
     current_stack = self.framework.postprocess_tif(js, image_filename)
-    #tif_output = "{}/{}.tif".format(tif_output_dir, basename)
-    #tifffile.imsave(tif_output, current_stack)
+    tif_output = "{}/{}.tif".format(tif_output_dir, basename)
+    tifffile.imsave(tif_output, current_stack)
     
 
 def classify(self, path):

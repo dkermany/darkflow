@@ -40,6 +40,7 @@ class argHandler(dict):
         self.define('classify', None, 'path to classified test subdirectories (/DME, /CNV, /DRUSEN, /NORMAL)')
         self.define('evaluate', False, 'Evaluates model on test set. Requires imgdir and annotations.')
         self.define('json2tif', False, 'Output 3D stack of different threshold predictions')
+        self.define('clinic', False, 'Gives best threshold predictions')
 
 
     def define(self, argName, default, description):

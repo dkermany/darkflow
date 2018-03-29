@@ -40,6 +40,7 @@ class YOLOv2(framework):
     is_inp = yolo.misc.is_inp
     postprocess = yolov2.predict.postprocess
     postprocess_tif = yolov2.predict.postprocess_tif
+    postprocess_OCT = yolov2.predict.postprocess_OCT
     _batch = yolov2.data._batch
     resize_input = yolo.predict.resize_input
     findboxes = yolov2.predict.findboxes
